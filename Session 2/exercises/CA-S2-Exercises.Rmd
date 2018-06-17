@@ -1,0 +1,53 @@
+---
+title: "CA - Session 2 - Exercises"
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+---
+
+# Class Exercises 1
+
+- Create a variable and store the number 25
+
+- Calculate the square root of 25
+
+- Create a vector with the first 100 numbers
+
+- Create a vector to hold the data of a student (grade, course and class, all of them numeric)
+    + access the element with the name “grade”
+    + change the data to character data
+
+- Create a vector with the first 50 numbers
+
+- Create another vector withe the numbers 51-100
+
+- Add them together
+
+- Multiply them
+
+- Join both of them in a larger vector
+
+# Class Exercises 2
+
+- Load the test dataset. Use: load("dataTB.rdatq")
+
+- What is the median of the final price?
+
+- What is the relationship between final price and user price?
+
+- What is the event with the highest final price?
+
+# Homework Exercises
+
+- Create a vector of coefficients, called coeffs, using the sample function. Here, we draw a sample of size 3 from −20, −19, . . . , 19, 20 with replacement
+
+- Determine the class of the object coeffs.
+
+- Determine the length of the object coeffs.
+
+- Determine the names associated with the vector
+
+- Assign some names (a,b,c) to the vector. 
+
+- What is the class of the names of the vector coeffs?

@@ -1,0 +1,127 @@
+---
+title: "CA - S6: Solution"
+author: Josep Curto, IE Business School
+abstract: "This document is the solution of the exercises of session 6."
+keywords: "r, nps"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: 
+  html_notebook: 
+    fig_caption: yes
+    toc: yes
+    toc_float: yes
+    self_contained: yes
+---
+
+# Calculate NPS with R
+
+## Load packages
+
+We will use NPS, NPC, readr, janitor, tidytext, tidyr and dplyr packages.
+
+```{r packages, warning=FALSE, echo=FALSE, message=FALSE}
+# Cleaning the environment
+rm(list=ls())
+
+# List of packages for session
+.packages = c("NPS", "NPC","readxl","janitor","ggplot2")
+
+# Install CRAN packages (if not already installed)
+.inst <- .packages %in% installed.packages()
+if(length(.packages[!.inst]) > 0) install.packages(.packages[!.inst])
+
+# Load packages into session 
+lapply(.packages, require, character.only=TRUE)
+```
+
+## Loading data
+
+Firs we load our data set refering the survey of a non-real airline company:
+
+```{r loading survey data, warning=FALSE, echo=FALSE, message=FALSE}
+survey_data  <- read_xlsx("data/nps_exercise.xlsx")
+survey_data
+```
+
+We prepare the data
+
+```{r clean data}
+survey_data <- clean_names(survey_data)
+survey_data
+```
+
+We need to understand the main statistics:
+
+```{r summary_survey_data}
+summary(survey_data)
+```
+
+**Question: What information do we have?**
+
+We need to exclude missing values and incorrect value (-1).
+
+```{r cleaning}
+survey_data <- with(survey_data, survey_data[!(x12_q12_nps_score == -1 | is.na(x12_q12_nps_score)), ])
+```
+
+# NPS
+
+##  Calculate NPS
+
+Let's check the responses:
+
+```{r frequency table}
+# Frequency table
+prop.table(table(survey_data$x12_q12_nps_score))
+```
+
+Maybe it is better if you translate this information in terms of detractors, passives and promoters.
+
+```{r}
+summary(npc(survey_data$x12_q12_nps_score))
+```
+
+And display these results in a table (similar to the previous table):
+
+```{r}
+table(survey_data$x12_q12_nps_score, npc(survey_data$x12_q12_nps_score))
+```
+
+Let's make a graph:
+
+```{r histograms}
+# Histogram (v1)
+hist(survey_data$x12_q12_nps_score, breaks=-1:10, col=c(rep("red",7), rep("yellow",2), rep("green", 2)))
+
+# Histogram (v2)
+barplot(prop.table(table(survey_data$x12_q12_nps_score)),col=c(rep("red",7), rep("yellow",2), rep("green", 2)))
+```
+
+**Question: What can we observe?**
+
+```{r nps}
+# NPS Calculation
+nps(survey_data$x12_q12_nps_score) # equivalent nps(x, breaks = list(0:6, 7:8, 9:10))
+```
+
+**Question: What can we observe?**
+
+```{r main statistics}
+# Standard Error
+nps.se(survey_data$x12_q12_nps_score)
+
+# Variance
+nps.var(survey_data$x12_q12_nps_score)
+```
+
+Now that we hacve Net Promoter Score from the NPS survey, we should ask: 
+
+ - Is my survey sample large enough? 
+ - Is this fluctuation in NPS scores meaningful?
+
+To answer these questions we can run a type of significance test called the Wald test as implemented in the NPS package:
+
+```{r}
+nps.test (survey_data$x12_q12_nps_score,y = NULL, test = "wald", conf = 0.95, breaks = list(0:6,7:8, 9:10))
+```
+
+The goal of any significance test like the Wald test is to test how likely it is that a measurement happened by chance. The Wald test is not the only type of valid significance test for this situation, but the most important concept to draw from this is that of sample size. There are different ways of calculating a confidence interval, but a larger sample size will give you more accurate results.

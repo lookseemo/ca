@@ -1,0 +1,132 @@
+---
+title: "CA - S9: Example"
+author: Josep Curto, IE Business School
+date: 2017
+output: 
+  html_notebook: 
+    fig_caption: yes
+    toc: yes
+    toc_float: yes
+---
+
+# Calculate Cohort Analysis with R
+
+## Load packages
+
+```{r}
+# Cleaning the environment
+rm(list=ls())
+
+# List of packages for session
+.packages = c("readxl", "dplyr", "reshape","ggplot2")
+
+# Install CRAN packages (if not already installed)
+.inst <- .packages %in% installed.packages()
+if(length(.packages[!.inst]) > 0) install.packages(.packages[!.inst])
+
+# Load packages into session 
+lapply(.packages, library, character.only=TRUE)
+```
+
+## Loading data
+
+First, we load the data. This data refers to a MOOC we did:
+
+```{r}
+df <- read_excel("data/s9.xlsx", sheet="2016")
+df
+```
+
+How many students finish the course?
+
+```{r}
+Finished <- df$Finished[49]
+Finished
+```
+
+Is this a good result?
+
+```{r}
+Ratio <- df$Finished[49] / df$Started[49] *100
+Ratio
+```
+
+# MOOC Evolution
+
+How many students finished everyday the course (respect the total amount who started)?
+
+```{r}
+RatioEvolution <- data.frame(day = df$Day, ratio=df$Finished / df$Started *100)
+RatioEvolution
+```
+
+**Question: What we can observe?**
+
+We need a visual representation to understand what happened:
+
+```{r}
+g1 <- ggplot(RatioEvolution, aes(x = day, y = ratio)) + 
+  geom_line() + ggtitle("Completition Ratio Evolution") + 
+  ylab("Ratio") + xlab("Period") +
+  theme(plot.title = element_text(color="#666666", face="bold", size=16, hjust=0)) +
+  theme(axis.title = element_text(color="#666666", face="bold", size=10))
+g1
+```
+
+But we had some goals?
+
+```{r}
+g1 + geom_vline(xintercept=35, colour="red") + geom_hline(yintercept=20, colour="red")
+```
+
+**What do we observe?**
+
+Let's try to undestand what happened in every module (our cohorts!).
+
+```{r}
+df_finished <- dplyr::select(df, contains("Finished"))
+df_finished <- data.frame(day = df$Day, df_finished)
+df_finished.chart <- melt(df_finished, id.vars = "day")
+colnames(df_finished.chart) <- c('Day', 'Cohort', 'Students')
+```
+
+And we create a visual representation:
+
+```{r}
+p <- ggplot(df_finished.chart, aes(x=Day, y=Students, group=Cohort, colour=Cohort))
+p + geom_line() + ggtitle('Students Completition per day and cohort')
+```
+
+**Question: What we observe?**
+
+And now we add every day!
+
+```{r}
+p1 <- ggplot(df_finished.chart, aes(x=Cohort, y=Students, group=Day, colour=Day))
+p1 + geom_line() + ggtitle('Students Completition per day and cohort')
+```
+
+We can do the same for the completition ratio. First we prepare the data:
+
+```{r}
+df_finished_ratio <- as.data.frame(apply( df_finished, 2, function(x) x/df$Started*100 )) 
+df_finished_ratio$day <- df_finished$day
+df_finished_ratio.chart <- melt(df_finished_ratio, id.vars = "day")
+colnames(df_finished_ratio.chart) <- c('Day', 'Cohort', 'Ratio')
+```
+
+And now a couple of graphs. Firs one:
+
+```{r}
+p2 <- ggplot(df_finished_ratio.chart, aes(x=Day, y=Ratio, group=Cohort, colour=Cohort))
+p2 + geom_line() + ggtitle('Completition Ratio per day and cohort')
+```
+
+and second:
+
+```{r}
+p3 <- ggplot(df_finished_ratio.chart, aes(x=Cohort, y=Ratio, group=Day, colour=Day))
+p3 + geom_line() + ggtitle('Completition Ratio per day and cohort')
+```
+
+**Exercise: Let's do the same analysis for 2017.**

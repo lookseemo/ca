@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1529163262839.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1161693856",
+    "id" : "CA0BC838",
+    "lastKnownWriteTime" : 1528471506,
+    "last_content_update" : 1528471506,
+    "path" : "~/Documents/github/Customer-Analytics/Session 7/exercises/CA-S7-AA.Rmd",
+    "project_path" : "CA-S7-AA.Rmd",
+    "properties" : {
+        "chunk_output_type" : "inline"
+    },
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

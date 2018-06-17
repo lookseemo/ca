@@ -1,0 +1,265 @@
+---
+title: "CA - S3 - Solutions"
+Author: Josep Curto, IE Business School 
+output:
+  html_notebook:
+    toc: yes
+    toc_float: yes
+---
+
+# Warm-up Exercise
+
+- Can you explain the meaning of the following code?
+
+```{r}
+1==1
+0==1
+
+testVar <- -5
+testVar
+
+testVar2 <- 9
+testVar2
+
+ifelse(abs(testVar)>3,print("YESSSS"),print("NOOO"))
+
+if(testVar == 1 | testVar2 > 10)
+{
+  print("I am inside the if")
+}else if(testVar==3)
+{
+  print("I am printing the else because I have the value three")
+} else
+{
+  print("there is no hope...")
+}
+```
+
+# Exercises (slide 10)
+
+- Write a repeat{} loop that prints all the even numbers from 2 to 10. Start with i <- 0
+
+```{r}
+i <- 0
+
+repeat{
+  i <- i + 2
+  print(i)
+  if(i == 10) {
+    break
+  }
+}
+```
+
+- Write a while() loop that increments the	variable, “i“, 6 times, and prints “msg” at 	every iteration using the following variables: 
+    - msg <- c("Hello IE")
+    - i <- 1
+
+```{r}
+msg <- c("Hello IE")
+i <- 1
+
+while (i < 7) {
+  print(msg)
+  i = i + 1
+}
+```
+
+- Write a for() loop that prints the first four numbers of this sequence: x <- c(7, 4, 3, 8, 9, 25)
+
+```{r}
+x <- c(7, 4, 3, 8, 9, 25)
+
+for (i in x) {
+  if(i%%2==0)
+  {
+    print(i)
+  }
+}
+```
+
+# Exercises (slide 12)
+
+- Create a function that will return the sum of 2 numbers
+
+```{r}
+FunctSum<- function (x, y) {
+  result <- x + y
+  return(result)
+}
+
+x<-FunctSum(5.5,8)
+x
+```
+
+- Create a function what will return TRUE if a given integer is inside a vector
+    - With while
+    - With for
+    - With %in%
+    
+```{r}
+# With While
+f.exists <- function (vec, value) {
+  flag.exist <- FALSE
+  i <- 1
+  
+  while (i <= length (vec) & !flag.exist) {
+    
+    if (vec[i] == value) {
+      flag.exist <- TRUE
+    }
+    i <- 1 + i
+  }
+  return(flag.exist)
+}
+f.exists(c(1:10), 10)
+
+# With For
+for.exists<-function(vec,value)
+{
+  flag.exists=FALSE
+  for (i in vec)
+  {
+    if (i == value)
+    {
+      flag.exists=TRUE
+    }
+  }
+  return(flag.exists)
+}
+
+for.exists(c(1:10), "6")
+
+# With %in%
+check.wrap<-function(vec,x)
+{
+  flag.exists<- x %in% vec
+ return (flag.exists)
+}
+
+check.wrap(c(1:10), "6")
+
+```
+
+- Create a function that given a data frame will print by screen the name of the column and the class of data it contains (e.g. Variable1 is Numeric).
+
+```{r}
+f.class <- function (df) {
+  for (i in 1:ncol(df)) {
+    print(paste(names(df)[i], "is", class(df[, i]),sep=" ") )
+  }
+}
+f.class(cars)
+f.class(iris)
+```
+
+- Create a function that given an integer will calculate how many divisors it has (other than 1 and itself). Make the divisors appear by screen.
+
+```{r}
+f.div <- function(n) {
+  i <- 2
+  counter <- 0
+  
+  while(i <= n/2) {
+    if(n%%i==0) {
+      counter <- counter + 1
+      print(sprintf("%s is a divisor of %s",i,n))
+    }
+    i <- i + 1
+  }
+  sprintf("%s has %s divisors (other than 1 and itself)",n,counter)
+}
+f.div(16)
+f.div(27)
+f.div(53)
+```
+
+# Bonus Exercises
+
+- Write a function that performs the union of two sets. Note: for the sake of simplicity, let's consider a vector as a set.
+
+```{r}
+set.union <- function(a, b) {
+  u <- a
+  for (i in 1:length(b)) {
+    if (!(b[i] %in% u)) {
+      u <- append(u, b[i])
+    }
+  }
+  return(u)
+}
+
+a <- c(3, 5, 7, 11)
+b <- c(3, 5, 13, 17)
+set.union(a, b)
+```
+
+- Write a function that performs the intersection of two sets
+
+```{r}
+set.intersection <- function(a, b) {
+  intersect <- vector()
+  
+  for (i in 1:length(a)) {
+    if (a[i] %in% b) {
+      intersect <- append(intersect, a[i])
+    }
+  }
+  return(intersect)
+}
+
+a <- c(3, 5, 7, 11, 13, 20, 30)
+b <- c(3, 5, 13, 17, 7, 10)
+
+set.intersection(a, b)
+```
+
+- Create a function that tests if a set is a subset of another set.
+
+```{r}
+issubset <- function(a, b) {
+  for (i in 1:length(a)) {
+    if (!(a[i] %in% b)) {
+      return(FALSE)
+    }
+  }
+  return(TRUE)
+}
+
+a <- c(3, 5, 7, 11)
+b <- c(3, 5, 13, 17)
+
+c <- set.union(a, b)
+c
+
+print(issubset(a, c))
+print(issubset(b, c))
+print(issubset(c(3, 5, 7, 4), a))
+```
+
+# Bonus Exercises (II)
+
+- Load s3.cvs
+
+```{r}
+customerData <- read.csv("s3.csv")
+customerData 
+```
+
+- Create plot that represents the number of transactions per customer using ggplot2
+
+```{r}
+library(ggplot2)
+ggplot(customerData, aes(factor(customerID)))+ geom_bar() +
+  labs(x="Customer",y="# Transactions", title = "Transactions per Customer")
+```
+
+We have so many transactions and customers that the graph is really hard to read. Let's create a table with the aggregated number of transactions per customers.
+
+```{r}
+library(dplyr)
+countTransactions <- count(customerData, customerID)
+countTransactions
+```
+
+

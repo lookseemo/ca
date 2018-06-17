@@ -1,0 +1,71 @@
+---
+title: "CA - S3 - Exercises"
+output:
+  html_notebook:
+    toc: yes
+    toc_float: yes
+---
+
+# Warm-up Exercise
+
+- Can you explain the meaning of the following code?
+
+```{r}
+1==1
+0==1
+
+testVar <- -5
+testVar
+
+testVar2 <- 9
+testVar2
+
+ifelse(abs(testVar)>3,print("YESSSS"),print("NOOO"))
+
+if(testVar == 1 | testVar2 > 10)
+{
+  print("I am inside the if")
+}else if(testVar==3)
+{
+  print("I am printing the else because I have the value three")
+} else
+{
+  print("there is no hope...")
+}
+```
+
+# Exercises (slide 10)
+
+- Write a repeat loop that prints all the even numbers from 2 to 10. Start with i <- 0
+
+- Write a while() loop that increments the	variable, “i“, 6 times, and prints “msg” at 	every iteration using the following variables: 
+    - msg <- c("Hello IE")
+    - i <- 1
+
+- Write a for() loop that prints the first four numbers of this sequence: x <- c(7, 4, 3, 8, 9, 25)
+
+# Exercises (slide 12)
+
+- Create a function that will return the sum of 2 numbers
+
+- Create a function what will return TRUE if a given integer is inside a vector
+    - With while
+    - With for
+    - With %in%
+
+- Create a function that given a data frame will print by screen the name of the column and the class of data it contains (e.g. Variable1 is Numeric).
+
+- Create a function that given an integer will calculate how many divisors it has (other than 1 and itself). Make the divisors appear by screen.
+
+# Bonus Exercises (I)
+
+- Write a function that performs the union of two sets. Note: for the sake of simplicity, let's consider a vector as a set.
+
+- Write a function that performs the intersection of two sets
+
+- Create a function that tests if a set is a subset of another set.
+
+# Bonus Exercises (II)
+
+- Load s3.cvs
+- Create plot that represents the number of transactions per customer using ggplot2

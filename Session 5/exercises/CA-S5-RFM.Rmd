@@ -1,0 +1,151 @@
+---
+title: "CA - S5: Example"
+author: Josep Curto, IE Business School
+abstract: "This document introduces how to calculate RFM with R and how to create and understand customer segments based on RFM."
+keywords: "r, rfm"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: 
+  html_notebook: 
+    fig_caption: yes
+    toc: yes
+    toc_float: yes
+    self_contained: yes
+---
+
+# Calculate RFM with R
+
+## Load packages
+
+We will use readr, dplyr and ggplot2 packages.
+
+```{r packages, warning=FALSE, echo=FALSE, message=FALSE}
+# List of packages for session
+.packages = c("readr", "dplyr","ggplot2")
+
+# Install CRAN packages (if not already installed)
+.inst <- .packages %in% installed.packages()
+if(length(.packages[!.inst]) > 0) install.packages(.packages[!.inst])
+
+# Load packages into session 
+lapply(.packages, suppressPackageStartupMessages(require), character.only=TRUE)
+```
+
+## Load functions
+
+We are loading a function that calculates RFM Score.
+
+```{r functions}
+source("RFM.R")
+```
+
+## Loading data
+
+We load data into a dataframe:
+
+```{r loading, warning=FALSE, echo=FALSE, message=FALSE}
+df <- read_csv("data/s5.csv")
+df
+```
+
+We need to understand the structure of the data set:
+
+```{r structure}
+str(df)
+```
+
+We can review the main statistics:
+
+```{r summary}
+summary(df)
+```
+
+**Question: What we can say about the summary?**
+
+# RFM
+
+##  Calculate RFM
+
+```{r RFM}
+dfRFM <- rfm(df,
+           analysisDate = "2015/01/01", 
+           customer = "customerID", 
+           date = "date", 
+           revenue = "amount")
+dfRFM
+```
+
+How many customers do we have in every group?
+
+```{r countRFM}
+countRFM <- count(dfRFM, RFM_Score)
+countRFM
+```
+
+**Question: what we can observe?**
+
+## Visual Analysis
+
+```{r plot1}
+ggplot(dfRFM, aes(factor(RFM_Score))) +
+  geom_bar() +
+  ggtitle('Customer Distribution per RFM') +
+  labs(x="RFM",y="# Customers") + 
+  theme(plot.title = element_text(color="#666666", face="bold", size=16, hjust=0)) +
+  theme(axis.title = element_text(color="#666666", face="bold")) +
+  theme(axis.text.x  = element_text(angle=90,vjust=0.5))
+```
+
+**Question: what we can observe?**
+
+# Segmentation
+
+## Based on Recency
+
+Let's use **Recency** to segment our customers:
+
+```{r segmentation}
+dfRFM$segment <- NA
+dfRFM$segment[which(dfRFM$Recency > 365/2)] = "Inactive"
+dfRFM$segment[which(dfRFM$Recency <= 365/2 & dfRFM$Recency > 365/4)] = "Sleeping"
+dfRFM$segment[which(dfRFM$Recency <= 365/4)] = "Active"
+dfRFM
+```
+
+Let's review the outcome:
+```{r customerSegmentation}
+customerSegmentation <- count(dfRFM, segment)
+customerSegmentation
+```
+
+Let's create a graph for each one of the groups:
+
+```{r plot2}
+ggplot(dfRFM, aes(factor(RFM_Score),fill =factor(segment))) +
+  geom_bar() +
+  labs(x="RFM",y="# Customers", title="Customer Distribution per Recency") + 
+  theme(axis.text.x  = element_text(angle=90,vjust=0.5,size=8)) + 
+  facet_grid(. ~ segment) + theme(legend.position="none")
+```
+
+Let's create another graph where we combine all the groups:
+
+```{r plot 3}
+ggplot(dfRFM, aes(factor(RFM_Score),fill =factor(segment))) +
+  geom_bar() +
+  labs(x="RFM",y="# Customers",title="Customer Distribution per Recency") +
+  theme(axis.text.x  = element_text(angle=90,vjust=0.5,size=8)) + 
+  theme(legend.title=element_blank())
+```
+
+**Question: what we can observe?**
+
+# Saving the results
+
+```{r write}
+write.csv(dfRFM,"data/RFM.csv")
+```
+
+# Exercises
+
+Q1. Can you create a segmentation for frequency and monetary?
+Q2. Can you create a segmentation considering all RFM values? Hint: use the segments presented in the article.

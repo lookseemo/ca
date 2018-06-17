@@ -1,0 +1,331 @@
+---
+title: "CA - S5: Example"
+author: Josep Curto, IE Business School
+abstract: "This document introduces how to calculate RFM with R and how to create and understand customer segments based on RFM."
+keywords: "r, rfm"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: 
+  html_notebook: 
+    fig_caption: yes
+    toc: yes
+    toc_float: yes
+    self_contained: yes
+---
+
+# Calculate RFM with R
+
+## Load packages
+
+We will use readr, dplyr and ggplot2 packages.
+
+```{r packages, warning=FALSE, echo=FALSE, message=FALSE}
+# List of packages for session
+.packages = c("readr", "dplyr","ggplot2")
+
+# Install CRAN packages (if not already installed)
+.inst <- .packages %in% installed.packages()
+if(length(.packages[!.inst]) > 0) install.packages(.packages[!.inst])
+
+# Load packages into session 
+lapply(.packages, suppressPackageStartupMessages(require), character.only=TRUE)
+```
+
+## Load functions
+
+We are loading a function that calculates RFM Score.
+
+```{r functions}
+source("RFM.R")
+```
+
+## Loading data
+
+We load data into a dataframe:
+
+```{r loading, warning=FALSE, echo=FALSE, message=FALSE}
+df <- read_csv("data/s5.csv")
+df
+```
+
+We need to understand the structure of the data set:
+
+```{r structure}
+str(df)
+```
+
+We can review the main statistics:
+
+```{r summary}
+summary(df)
+```
+
+**Question: What we can say about the summary?**
+
+# RFM
+
+##  Calculate RFM
+
+```{r RFM}
+dfRFM <- rfm(df,
+           analysisDate = "2015/01/01", 
+           customer = "customerID", 
+           date = "date", 
+           revenue = "amount")
+dfRFM
+```
+
+How many customers do we have in every group?
+
+```{r countRFM}
+countRFM <- count(dfRFM, RFM_Score)
+countRFM
+```
+
+**Question: what we can observe?**
+
+## Visual Analysis
+
+```{r plot1}
+ggplot(dfRFM, aes(factor(RFM_Score))) +
+  geom_bar() +
+  ggtitle('Customer Distribution per RFM') +
+  labs(x="RFM",y="# Customers") + 
+  theme(plot.title = element_text(color="#666666", face="bold", size=16, hjust=0)) +
+  theme(axis.title = element_text(color="#666666", face="bold")) +
+  theme(axis.text.x  = element_text(angle=90,vjust=0.5))
+```
+
+**Question: what we can observe?**
+
+# Segmentation
+
+## Based on Recency
+
+Let's use **Recency** to segment our customers:
+
+```{r segmentation}
+dfRFM$segment <- NA
+dfRFM$segment[which(dfRFM$Recency > 365/2)] = "Inactive"
+dfRFM$segment[which(dfRFM$Recency <= 365/2 & dfRFM$Recency > 365/4)] = "Sleeping"
+dfRFM$segment[which(dfRFM$Recency <= 365/4)] = "Active"
+dfRFM
+```
+
+Let's review the outcome:
+```{r customerSegmentation}
+customerSegmentation <- count(dfRFM, segment)
+customerSegmentation
+```
+
+Let's create a graph for each one of the groups:
+
+```{r plot2}
+ggplot(dfRFM, aes(factor(RFM_Score),fill =factor(segment))) +
+  geom_bar() +
+  labs(x="RFM",y="# Customers", title="Customer Distribution per Recency") + 
+  theme(axis.text.x  = element_text(angle=90,vjust=0.5,size=8)) + 
+  facet_grid(. ~ segment) + theme(legend.position="none")
+```
+
+Let's create another graph where we combine all the groups:
+
+```{r plot 3}
+ggplot(dfRFM, aes(factor(RFM_Score),fill =factor(segment))) +
+  geom_bar() +
+  labs(x="RFM",y="# Customers",title="Customer Distribution per Recency") +
+  theme(axis.text.x  = element_text(angle=90,vjust=0.5,size=8)) + 
+  theme(legend.title=element_blank())
+```
+
+**Question: what we can observe?**
+
+## Other segmentations
+
+We want to answer the question **Can you create a segmentation for frequency and monetary?**
+
+We have several approaches.
+
+(1) **Create segments per each one of the variables (as the questions states)**
+
+```{r summary-dfRFM} 
+summary(dfRFM)
+```
+
+We can use the information of the summary. And in particular the 1st and 3rd quantiles to create new segmentation for frequency, monetary and, even, recency! How ever, the breaks must be related to business constrains (such as marketing budget constrains, product and customer lifecycle,...) rather than just statistics.
+
+Let's apply this criteria to our segments. We are going to create three new columns (one for each type of segment) and we will use the current segment column in the dataframe for option 2. We need to consider relevant names for each segment.
+
+Using a particular criteria for the segmentation it changes completely our perspective of the customers.
+
+```{r other-segmentations}
+dfRFM$segmentRecency <- NA
+dfRFM$segmentRecency[which(dfRFM$Recency > quantile(dfRFM$Recency, 0.75))] <- "Inactive"
+dfRFM$segmentRecency[which(dfRFM$Recency <= quantile(dfRFM$Recency, 0.75) & 
+                             dfRFM$Recency > quantile(dfRFM$Recency, 0.5))] <- "Sleeping"
+dfRFM$segmentRecency[which(dfRFM$Recency <= quantile(dfRFM$Recency, 0.5))] <- "Active"
+
+dfRFM$segmentFrequency <- NA
+dfRFM$segmentFrequency[which(dfRFM$Frequency > quantile(dfRFM$Frequency, 0.75))] <- "Fans"
+dfRFM$segmentFrequency[which(dfRFM$Frequency <= quantile(dfRFM$Frequency, 0.75) 
+                             & dfRFM$Frequency > quantile(dfRFM$Frequency, 0.5))] <- "Loyal"
+dfRFM$segmentFrequency[which(dfRFM$Frequency <= quantile(dfRFM$Frequency, 0.5))] <- "Rare"
+
+dfRFM$segmentMonetary <- NA
+dfRFM$segmentMonetary[which(dfRFM$Monetary > quantile(dfRFM$Monetary, 0.75))] <- "High Spenders"
+dfRFM$segmentMonetary[which(dfRFM$Monetary <= quantile(dfRFM$Monetary, 0.75) 
+                            & dfRFM$Monetary > quantile(dfRFM$Monetary, 0.5))] <- "Average Spenders"
+dfRFM$segmentMonetary[which(dfRFM$Monetary <= quantile(dfRFM$Monetary, 0.5))] <- "Low Spenders"
+
+dfRFM
+```
+
+It is relevent to knwo how many customer are in every group.
+
+For recency segmentation:
+
+```{r customerSegmentationRecency}
+customerSegmentationRecency <- count(dfRFM, segmentRecency)
+customerSegmentationRecency
+```
+
+For frequency segmentation:
+
+```{r customerSegmentationFrequency}
+customerSegmentationFrequency <- count(dfRFM, segmentFrequency)
+customerSegmentationFrequency
+```
+
+For monetary segmentation:
+
+```{r customerSegmentationMonetary}
+customerSegmentationMonetary <- count(dfRFM, segmentMonetary)
+customerSegmentationMonetary
+```
+
+And then we can make the new visual representations to ilustrate the customer segments based on recency, frequency and monetary.
+
+**Segmentation based on Recency**
+
+```{r plot3}
+ggplot(dfRFM, aes(factor(RFM_Score),fill =factor(segmentRecency))) +
+  geom_bar() +
+  labs(x="RFM",y="# Customers", title="Customer Distribution per Recency") +
+  theme(axis.text.x  = element_text(angle=90,vjust=0.5,size=8)) + 
+  theme(legend.title=element_blank())
+```
+
+**Segmentation based on Frequency**
+
+```{r plot4}
+ggplot(dfRFM, aes(factor(RFM_Score),fill =factor(segmentFrequency))) +
+  geom_bar() +
+  labs(x="RFM",y="# Customers", title="Customer Distribution per Frequency") +
+  theme(axis.text.x  = element_text(angle=90,vjust=0.5,size=8)) + 
+  theme(legend.title=element_blank())
+```
+
+**Segmentation based on Monetary**
+
+```{r plot5}
+ggplot(dfRFM, aes(factor(RFM_Score),fill =factor(segmentMonetary))) +
+  geom_bar() +
+  labs(x="RFM",y="# Customers", title="Customer Distribution per Monetary") +
+  theme(axis.text.x  = element_text(angle=90,vjust=0.5,size=8)) + 
+  theme(legend.title=element_blank())
+```
+
+(2) **Customer Segmentation with RFM**
+
+```{r ultimate-segmentation}
+dfRFM$segment[which(dfRFM$RFM_Score == 555)] <- "Champions"
+
+dfRFM$segment[which(dfRFM$RFM_Score == 444 | 
+                      dfRFM$RFM_Score == 445 | 
+                      dfRFM$RFM_Score == 454 |
+                      dfRFM$RFM_Score == 455 |
+                      dfRFM$RFM_Score == 544 |
+                      dfRFM$RFM_Score == 545 |
+                      dfRFM$RFM_Score == 334 |
+                      dfRFM$RFM_Score == 335 |
+                      dfRFM$RFM_Score == 345 |
+                      dfRFM$RFM_Score == 355)] <- "Loyal Customers"
+
+dfRFM$segment[which(dfRFM$RFM_Score == 431 | 
+                      dfRFM$RFM_Score == 432 | 
+                      dfRFM$RFM_Score == 433 |
+                      dfRFM$RFM_Score == 434 |
+                      dfRFM$RFM_Score == 435)] <- "Potential Loyalist"
+
+dfRFM$segment[which(dfRFM$RFM_Score == 413 | 
+                      dfRFM$RFM_Score == 414 | 
+                      dfRFM$RFM_Score == 415 |
+                      dfRFM$RFM_Score == 513 |
+                      dfRFM$RFM_Score == 514 |
+                      dfRFM$RFM_Score == 515 |
+                      dfRFM$RFM_Score == 421 |
+                      dfRFM$RFM_Score == 422 |
+                      dfRFM$RFM_Score == 423)] <- "New Customers"  
+  
+dfRFM$segment[which(dfRFM$RFM_Score == 411 | 
+                      dfRFM$RFM_Score == 412 | 
+                      dfRFM$RFM_Score == 511 |
+                      dfRFM$RFM_Score == 512)] <- "Promising"  
+
+dfRFM$segment[which(dfRFM$RFM_Score == 223 | 
+                      dfRFM$RFM_Score == 232 | 
+                      dfRFM$RFM_Score == 233 |
+                      dfRFM$RFM_Score == 322 |
+                      dfRFM$RFM_Score == 323 |
+                      dfRFM$RFM_Score == 332 |
+                      dfRFM$RFM_Score == 333 |
+                      dfRFM$RFM_Score == 321 |
+                      dfRFM$RFM_Score == 311)] <- "Customers Needing Attention"  
+
+dfRFM$segment[which(dfRFM$RFM_Score == 211 | 
+                      dfRFM$RFM_Score == 212 | 
+                      dfRFM$RFM_Score == 221 |
+                      dfRFM$RFM_Score == 222 |
+                      dfRFM$RFM_Score == 123 |
+                      dfRFM$RFM_Score == 133 |
+                      dfRFM$RFM_Score == 134)] <- "About To Sleep"  
+
+dfRFM$segment[which(dfRFM$RFM_Score == 144 | 
+                      dfRFM$RFM_Score == 244)] <- "At Risk"  
+  
+dfRFM$segment[which(dfRFM$RFM_Score == 145 | 
+                      dfRFM$RFM_Score == 155 | 
+                      dfRFM$RFM_Score == 245 |
+                      dfRFM$RFM_Score == 255)] <- "Can’t Lose Them"  
+  
+dfRFM$segment[which(dfRFM$RFM_Score == 112 | 
+                      dfRFM$RFM_Score == 121 | 
+                      dfRFM$RFM_Score == 122 | 
+                      dfRFM$RFM_Score == 131 | 
+                      dfRFM$RFM_Score == 132)] <- "Hibernating"
+
+dfRFM$segment[which(dfRFM$RFM_Score == 111)] <- "Lost"
+  
+dfRFM 
+```
+
+For this more general segmentation:
+
+```{r customerSegmentationUltimate}
+customerSegmentation <- count(dfRFM, segment)
+customerSegmentation
+```
+
+And then we can make the new visual representation to ilustrate the segmentation.
+
+```{r plot6}
+ggplot(dfRFM, aes(factor(RFM_Score),fill =factor(segment))) +
+  geom_bar() +
+  labs(x="RFM",y="# Customers", title="Customer Distribution per RFM Groups") +        theme(axis.text.x  = element_text(angle=90,vjust=0.5,size=8)) + 
+  theme(legend.title=element_blank())
+```
+
+# Saving the results
+
+```{r write}
+write.csv(dfRFM,"data/RFM.csv")
+```

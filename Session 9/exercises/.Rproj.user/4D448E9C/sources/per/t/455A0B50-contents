@@ -1,0 +1,146 @@
+---
+title: 'CA - S5: Cohort Analysis'
+author: "Josep Curto"
+date: "2018"
+output:
+  pdf_document:
+    toc: yes
+  html_notebook:
+    fig_caption: yes
+    self_contained: yes
+    toc: yes
+    toc_float: yes
+---
+
+# The problem
+
+- **Problem**: we don't know how customers' behaviour changes over time
+- **Goals**:
+  - Understanding customers' behaviour evolution
+  - Understanding behaviour using groups that evolve over time, not individually
+- **Why?** Perform specific actions on groups, detect similar temporal patterns on group
+ 
+But attention, we decide the groups instead of relaying on a simple metric or a segmentation technique.
+
+We will use what is called cohort analysis.
+
+# Definition
+
+> **Cohort** is a group of people used in a study who have something (such as age, social class, when they become our customers) in common.
+
+We can find the origin in ancient times. A cohort was a military unit, one of ten divisions in a Roman legion.
+
+Then,
+
+> **Cohort analysis** is a observational, analytical and longitudinal study. It is a comparison of the evolution of a particular aspect (KPI). Individuals comprising study groups are selected based on the presence of a particular characteristic.
+
+Cohort analysis is a traditional tool in epidemiology. When we applied this technique in other industries most of the times:
+
+ - Metrics are easier to capture and analyse
+ - Direct: number of customers, revenue, cost
+ - Derived: retention
+
+# Types of Age-period-cohort Analysis
+
+Age-period-cohort analysis is one of the methods used in an effort to separate the effects of age, period, and cohort. 
+
+Keyes et al. (2010) distinguish between three different kind of models, based on their distinction between 1st order and 2nd order effects:
+
+  - Models in which 1st order effects are estimated and interpreted;
+  - Models in which 2nd order effects are estimated and interpreted; and
+  - Hybrid models in which 1st order effects are estimated but 2nd order effects interpreted.
+  
+1st order effects are determined based on the assumption that age, period, and cohort can exist independently of each other and have a linear relationship with the outcome of interest. Each linear slope is estimated by controlling for the additive effect of the other two effects. These linear relationships are what Keyes et al. term 1st order effects. 2nd order effects are those which have a non- linear relationship with the outcome of interest.
+
+# How to apply the analysis
+
+ - **[BU]** Determine business questions/needs, measure to study and cohorts of interest
+ - **[DU]** Data Sourcing, Cleaning & Exploration 
+ - **[DP]** Create cohorts, extract data according to cohorts
+ - **[M]** Calculate the measure
+ - **[E]** Analyze results and adjust parameters
+ - **[D]** Present and explain the results
+
+# Example (I)
+
+First we load the required packages: ggplot2 and dplyr.
+
+```{r, echo=FALSE}
+library(ggplot2)
+library(dplyr)
+```
+
+Imagine that we have a startup and we have data from the weekly evolution of several cohorts (defined as cohort X refers to the customers that subscribe to the service in week X).
+
+```{r}
+df <- structure(list(cohort = c(1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 4L, 4L, 5L), wk = c(1L, 2L, 3L, 4L, 5L, 2L, 3L, 4L, 5L, 3L, 4L, 5L, 4L, 5L, 5L), value = c(24L, 12L, 10L, 5L, 2L, 75L, 43L, 11L, 10L, 97L, 35L, 12L, 9L, 4L, 5L), flag = c(0L, 0L, 0L, 0L, 0L, 1L, 0L, 0L, 0L, 1L, 0L, 0L, 0L, 0L, 0L)), .Names = c("cohort", "week", "value", "action"), class = "data.frame", row.names = c(NA, -15L))
+df$action <- as.factor(df$action)
+df
+```
+
+In this data set we have four fields: cohort, week, value (number of active customers) and action (the company did a marketing action to adquire customers).
+
+We can present this information as a cohort table to understand what is happening.
+
+```{r}
+ggplot(df, aes(x = week, y = cohort, fill = action)) + 
+    geom_tile(color = "white") +
+    geom_text(aes(label = value), color = "white")
+```
+
+The diagonal gives information about the number of new customers per week. Every row is giving as information about how many customers in every cohort remain alive. From the dataset we can obtain relevant information as well. For example, the total amount of customers alive per week:
+
+```{r}
+weeklyCustomers <- aggregate(value ~ week, df, sum)
+weeklyCustomers
+```
+
+We can know as well the amount of new customers per week just reviewing the diagonal.
+
+# Example (II)
+
+Let's imagine that we have the following cohort table:
+
+```{r, echo=FALSE, results='asis'}
+cohort.sum <- data.frame(cohort=c('C01', 'C02', 'C03', 'C4', 'C05', 'C06', 'C07', 'C08', 'C09', 'C10', 'C11', 'C12'),
+ M1=c(270000,0,0,0,0,0,0,0,0,0,0,0),
+ M2=c(85000,275000,0,0,0,0,0,0,0,0,0,0),
+ M3=c(72000,63000,277000,0,0,0,0,0,0,0,0,0),
+ M4=c(52000,42000,76000,361000,0,0,0,0,0,0,0,0),
+ M5=c(50000,45000,60000,80000,288000,0,0,0,0,0,0,0),
+ M6=c(51000,52000,55000,51000,58000,253000,0,0,0,0,0,0),
+ M7=c(51000,69000,48000,45000,42000,54000,272000,0,0,0,0,0),
+ M8=c(46000,85000,77000,41000,38000,37000,74000,352000,0,0,0,0),
+ M9=c(38000,42000,72000,41000,31000,30000,49000,107000,285000,0,0,0),
+ M10=c(39000,38000,45000,33000,34000,34000,46000,83000,69000,279000,0,0),
+ M11=c(38000,42000,31000,32000,26000,28000,43000,82000,51000,87000,282000,0),
+ M12=c(35000,35000,38000,45000,35000,32000,48000,44000,47000,52000,92000,500000))
+knitr::kable(cohort.sum)
+```
+
+This table provide diffent types of information:
+
+ - **Diagonal**: Revenue generated by the the new customers per month
+ - **Row**: Total revenue per cohort during the period of analysis.
+ - **Columns**: Total revenue generated per month.
+
+# Benefits
+
+ - Understand Customer Lifecycle/Journey: length, value, situation,...
+ - Identify patterns
+ - Behavioral/Psychographic analysis
+ 
+# Use Cases
+
+ - Examine where cashflow is coming from and understand the health of your business
+ - Easily see how much monthly or quarterly revenue is driven from newer and older cohorts
+ - Study customer retention patterns to see if they are getting better or worse
+ - Compare cohorts of users from different segments
+
+# References
+
+- [Bent Nielsen. apc: An R Package for Age-Period-Cohort Analysis. The R Journal, 7(2):52-64, Dec. 2015](https://journal.r-project.org/archive/2015-2/nielsen.pdf)
+- [Startup Metrics for Pirates](http://www.slideshare.net/dmc500hats/startup-metrics-for-pirates-seedcamp-sept-2009)
+- [Lean Analytics](http://leananalyticsbook.com/buy-lean-analytics-book/)
+- [Cohort Analysis Cheat Sheet](https://chartmogul.com/wp-content/uploads/2015/02/The-Ultimate-Cohort-Analysis-Cheat-Sheet.pdf)
+- [Data Analytics for Startups - Tetuan Valley Startup School Fall 2015](http://www.slideshare.net/justohidalgo/data-analytics-for-startups-tetuan-valley-startup-school-fall-2015)

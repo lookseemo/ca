@@ -1,0 +1,142 @@
+---
+title: "CA - S2 - Solutions"
+output:
+  html_notebook:
+    theme: default
+    toc: yes
+    toc_float: yes
+---
+
+# Class Exercises 1
+
+- Create a variable and store the number 25
+
+```{r}
+test <- 25
+test
+```
+
+- Calculate the square root of 25
+
+```{r}
+test <- sqrt(test)
+test
+```
+
+Another option:
+
+```{r}
+test <- sqrt(25)
+test
+```
+
+- Create a vector with the first 100 numbers
+
+```{r}
+first100 <- 1:100
+first100
+```
+
+We have other options such as:
+
+```{r}
+first100 <- seq(1:100)
+first100 <- c(1:100)
+```
+
+
+- Create a vector to hold the data of a student (grade, course and class, all of them numeric)
+    + access the element with the name “grade”
+    + change the data to character data
+
+```{r}
+student <- c(grade=45,course=10,class=34)
+student["grade"]
+student[2] <- as.character(student[2])
+class(student)
+```
+
+- Create a vector with the first 50 numbers
+```{r}
+first50 <- 1:50
+first50 
+```
+- Create another vector withe the numbers 51-100
+```{r}
+second50 <- 51:100
+second50
+```
+- Add them together
+```{r}
+vectorsum <- first50+second50
+vectorsum
+```
+
+- Multiply them
+```{r}
+vector.product <- first50*second50
+vector.product
+```
+- Join both of them in a larger vector
+```{r}
+total.vector <- c(first50,second50)
+total.vector 
+```
+
+# Class Exercises 2
+
+- Load the test dataset. Use: load("dataTB.rdatq")
+```{r}
+load("dataTB.rdatq")
+```
+
+- What is the median of the final price?
+```{r}
+median(dataTickets$final_price)
+```
+
+- What is the relationship between final price and user price?
+```{r}
+print(dataTickets$final_price/dataTickets$usr_price)
+cor(dataTickets$usr_price,dataTickets$final_price)
+plot(dataTickets$usr_price,dataTickets$final_price)
+```
+
+- What is the event with the highest final price?
+```{r}
+print(max(dataTickets$final_price))
+dataTickets[dataTickets$final_price==max(dataTickets$final_price),]
+```
+
+# Homework Exercises
+
+- Create a vector of coefficients, called coeffs, using the sample function. Here, we draw a sample of size 3 from −20, −19, . . . , 19, 20 with replacement
+```{r}
+coeffs <- sample(-20:20,3,replace=T)
+coeffs 
+```
+
+- Determine the class of the object coeffs.
+```{r}
+class(coeffs)
+```
+
+- Determine the length of the object coeffs.
+```{r}
+length(coeffs)
+```
+
+- Determine the names associated with the vector
+```{r}
+names(coeffs)
+```
+- Assign some names (a,b,c) to the vector. 
+
+```{r}
+names(coeffs) <- c("a","b","c")
+```
+
+-  What is the class of the names of the vector coeffs?
+```{r}
+class(names(coeffs))
+```

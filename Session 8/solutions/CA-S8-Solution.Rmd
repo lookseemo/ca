@@ -1,0 +1,150 @@
+---
+title: "CA - S8: Solution"
+author: Josep Curto, IE Business School
+abstract: "This document is the solution of the exercises of session 8."
+keywords: "r, customer segmentation"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: 
+  html_notebook: 
+    fig_caption: yes
+    toc: yes
+    toc_float: yes
+    self_contained: yes
+---
+
+# Data Import
+
+## Load packages
+
+```{r}
+# Cleaning the environment
+rm(list=ls())
+
+# List of packages for session
+.packages = c("ggplot2", "NbClust","ggfortify","GGally","cluster", "factoextra","dplyr")
+
+# Install CRAN packages (if not already installed)
+.inst <- .packages %in% installed.packages()
+if(length(.packages[!.inst]) > 0) install.packages(.packages[!.inst])
+
+# Load packages into session 
+lapply(.packages, require, character.only=TRUE)
+```
+
+## Loading data
+
+First, we load the data:
+
+```{r}
+data <- read.csv('data/s8.csv', header = T,sep=',')
+```
+
+# Question 1
+
+**What happens if we consider 4 clusters?**
+
+This questions refers to the original data set where 4 clusters was as good as 2 clusters (and three). We just need to execute kmeans on the original dataset with k=4.
+
+```{r}
+fit <- kmeans(scale(data), 4)
+```
+
+We need to understand the new groups using the average
+
+```{r}
+clusters <- aggregate(data,by=list(fit$cluster),FUN=mean)
+clusters
+```
+
+What do we have here? We have four groups.
+
+ - Two for each channel.
+ - **Group 1**: They buy online. They buy mainly fresh and bits of the rest. Let's call them "Single & Healthy". 
+ - **Group 2**: They buy online. They buy a great amount of fresh and some of the rest. Almost double of group 2 (in the rest). Let's call them "Couple & Healthy". 
+ - **Group 3**: They buy offline. They buy a great amount of milk, grocery, detergents_paper and fresh. They are a family.
+ - **Group 4**: They buy offline. They buy a great amount of grocery, fresh, and milk and detergent_paper. They may be a young and healthy couple.
+ 
+That means we have a more precise description of our customers. As you can imagine with more attributes (for example, demographic) we will be able to create a more accurate definition.
+
+We can add back the segmentation.
+
+```{r}
+df.clusters <- data.frame(data, cluster=fit$cluster)
+df.clusters
+```
+
+We can ask how many do we have.
+
+```{r}
+customerSegmentation <- count(df.clusters, cluster)
+customerSegmentation
+```
+
+# Question 2
+
+**What happens if we make the same analysis without the columns channel and region?**
+
+Consider the following data frame:
+
+```{r}
+df <- data[-(1:2)]
+df
+```
+
+## PCA
+
+Do we have too many variables? We use a technique call PCA (Principal Component Analysis). What if we apply PCA to the whole data set:
+
+```{r}
+pca <- prcomp(df, scale=TRUE)
+pca
+```
+
+```{r}
+summary(pca)
+```
+
+It does not make sense to get rid of any customer attribute.
+
+## Customer Segmentation
+
+We need to be able to reproduce our analysis:
+
+```{r}
+set.seed(1234)
+```
+
+We need to scale the data to compare diferent magnitudes. This is call data normalization.
+
+```{r}
+df.scaled <- scale(df) 
+```
+
+We will use Kmeans for our analysis. We need to determine the right number of clusters. We use NbClust. It provides 30 indices for determining the relevant number of clusters and proposes to users the best clustering scheme from the different results obtained by varying all combinations of number of clusters, distance measures, and clustering methods.
+
+```{r}
+res <- NbClust(df.scaled, diss=NULL, distance = "euclidean", min.nc=2, max.nc=12, 
+             method = "kmeans", index = "all")
+
+fviz_nbclust(res) + theme_minimal()
+```
+
+This time is more clear that 2 is the optimal number of clusters and 3 and 10 are the second suboptimal options!
+
+```{r}
+fit <- kmeans(df.scaled, 2)
+```
+
+We need to understand the new groups using the average
+
+```{r}
+clusters <- aggregate(df,by=list(fit$cluster),FUN=mean)
+clusters
+```
+
+With two clusters we obtain similar results. Two groups: families (group 2) vs. healthy. We can add back the segmentation.
+
+```{r}
+df <- data.frame(df, cluster=fit$cluster)
+df
+```

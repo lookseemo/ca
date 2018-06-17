@@ -1,0 +1,165 @@
+---
+title: "CA - S6: Example"
+author: Josep Curto, IE Business School
+abstract: "This document introduces how to calculate NPS with R and customer sentiment analysis"
+keywords: "r, nps"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: 
+  html_notebook: 
+    fig_caption: yes
+    toc: yes
+    toc_float: yes
+    self_contained: yes
+---
+
+# Calculate NPS with R
+
+## Load packages
+
+We will use NPS, NPC, readr, janitor, tidytext, tidyr and dplyr packages.
+
+```{r packages, warning=FALSE, echo=FALSE, message=FALSE}
+# Cleaning the environment
+rm(list=ls())
+
+# List of packages for session
+.packages = c("NPS", "NPC","readr","janitor","tidytext","tidyr","dplyr","ggplot2")
+
+# Install CRAN packages (if not already installed)
+.inst <- .packages %in% installed.packages()
+if(length(.packages[!.inst]) > 0) install.packages(.packages[!.inst])
+
+# Load packages into session 
+lapply(.packages, require, character.only=TRUE)
+```
+
+## Loading data
+
+Firs we load our data set refering the survey of a non-real airline company:
+
+```{r loading survey data, warning=FALSE, echo=FALSE, message=FALSE}
+survey_data  <- read_csv("data/nps_airline.csv")
+survey_data
+```
+
+We prepare the data
+
+```{r clean data}
+survey_data <- clean_names(survey_data)
+survey_data
+```
+
+We need to understand the main statistics:
+
+```{r summary_survey_data}
+summary(survey_data)
+```
+
+**Question: What information do we have?**
+
+# NPS
+
+##  Calculate NPS
+
+Let's check the responses:
+
+```{r frequency table}
+# Frequency table
+prop.table(table(survey_data$net_promoter_score))
+```
+
+Maybe it is better if you translate this information in terms of detractors, passives and promoters.
+
+```{r}
+summary(npc(survey_data$net_promoter_score))
+```
+
+And display these results in a table (similar to the previous table):
+
+```{r}
+table(survey_data$net_promoter_score, npc(survey_data$net_promoter_score))
+```
+
+Let's make a graph:
+
+```{r histograms}
+# Histogram (v1)
+hist(survey_data$net_promoter_score, breaks=-1:10, col=c(rep("red",7), rep("yellow",2), rep("green", 2)))
+
+# Histogram (v2)
+barplot(prop.table(table(survey_data$net_promoter_score)),col=c(rep("red",7), rep("yellow",2), rep("green", 2)))
+```
+
+**Question: What can we observe?**
+
+```{r nps}
+# NPS Calculation
+nps(survey_data$net_promoter_score) # equivalent nps(x, breaks = list(0:6, 7:8, 9:10))
+```
+
+**Question: What can we observe?**
+
+```{r main statistics}
+# Standard Error
+nps.se(survey_data$net_promoter_score)
+
+# Variance
+nps.var(survey_data$net_promoter_score)
+```
+
+Now that we hacve Net Promoter Score from the NPS survey, we should ask: 
+
+ - Is my survey sample large enough? 
+ - Is this fluctuation in NPS scores meaningful?
+
+To answer these questions we can run a type of significance test called the Wald test as implemented in the NPS package:
+
+```{r}
+nps.test (survey_data$net_promoter_score,y = NULL, test = "wald", conf = 0.95, breaks = list(0:6,7:8, 9:10))
+```
+
+The goal of any significance test like the Wald test is to test how likely it is that a measurement happened by chance. The Wald test is not the only type of valid significance test for this situation, but the most important concept to draw from this is that of sample size. There are different ways of calculating a confidence interval, but a larger sample size will give you more accurate results.
+
+# Customer Sentiment Analysis
+
+First, we need to load the data. We are not discussing how we obtained the twitter data.
+
+```{r loading airtel twitter data, warning=FALSE, echo=FALSE, message=FALSE}
+tweets_data  <- read_csv("data/tweets.csv")
+tweets_data
+```
+
+We need to break the text into individual tokens (a process called *tokenization*). A token is a meaningful unit of text, most often a word, that we are interested in using for further analysis, and tokenization is the process of splitting text into tokens.
+
+```{r tokenization}
+tweets_data %>%
+  unnest_tokens(word, text)
+```
+
+```{r sentiment analysis, warning=FALSE, echo=FALSE, message=FALSE}
+reply_sentiment <- tweets_data %>%
+  unnest_tokens(word, text) %>%
+  inner_join(get_sentiments("bing")) %>% count(in_reply_to_user_id, sentiment) %>%
+  spread(sentiment, n, fill = 0) %>%
+  mutate(sentiment = positive - negative)
+reply_sentiment
+```
+
+Let's plot the sentiment of the replies:
+
+```{r plot}
+ggplot(reply_sentiment, aes(sentiment)) +
+  geom_bar(show.legend = FALSE,aes(fill = sentiment))
+```
+
+# Exercise
+
+Given the data set "nps_exercise.xlsx", can you calculate the NPS?
+
+## More datasets to practice
+
+ - [Amazon Reviews](http://jmcauley.ucsd.edu/data/amazon/)
+ - [Amazon question/answer data](http://jmcauley.ucsd.edu/data/amazon/qa/)
+ - [Reddit Comments](https://github.com/linanqiu/reddit-dataset)
+ - [Facebook Comments](https://archive.ics.uci.edu/ml/datasets/Facebook+Comment+Volume+Dataset)
+ - [YouTube Spam Collection Data Set](https://archive.ics.uci.edu/ml/datasets/YouTube+Spam+Collection)

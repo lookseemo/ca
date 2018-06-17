@@ -1,0 +1,264 @@
+---
+title: "CA - S10: Churn Analysis with R"
+author: Josep Curto, IE Business School
+abstract: "This technical note introduces how to calculate churn analysis with R."
+keywords: "r, churn analysis"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: 
+  html_notebook: 
+    fig_caption: yes
+    toc: yes
+    toc_float: yes
+    self_contained: yes
+---
+
+# Understanding churn evolution
+
+## Our case
+
+ - Our scenario: company with a subscription business model created one year ago
+ - A user pays 5 euros per month to access the service.
+ - Some users abandoned the service after some months.
+ - We need to know what is happening.
+ - We don't have a lot of data, but we need to run some analysis and understand the evolution.
+ - We will use  *survival analysis* based on [Kaplan-Meier Estimators](https://en.wikipedia.org/wiki/Kaplan–Meier_estimator).
+
+## Load packages
+
+```{r message=FALSE}
+# Cleaning the environment
+rm(list=ls())
+
+# List of packages for session
+.packages = c("ggplot2","survival","GGally","scales","survminer")
+
+# Install CRAN packages (if not already installed)
+.inst <- .packages %in% installed.packages()
+if(length(.packages[!.inst]) > 0) install.packages(.packages[!.inst])
+
+# Load packages into session 
+lapply(.packages, library, character.only=TRUE)
+```
+
+## Loading data
+
+First, we load the data. We have four variables: gender (0 means male, 1 means female), start (refers to the day of the year when the customer started the subscription), time (refers to the amount of days where the customer was active since the start day) and churned (0 means no churned and 1 means churned).
+
+```{r cache=TRUE, cache.path = 'cache/'}
+df <- read.csv('data/s10-1.csv')
+df
+```
+
+**Question: Do we have some insights from data exploration?**
+
+## The Kaplan–Meier estimator
+
+The **Kaplan–Meier estimator**, also known as the product limit estimator, is a non-parametric statistic used to estimate the survival function from lifetime data. In medical research, it is often used to measure the fraction of patients living for a certain amount of time after treatment.
+
+## Analysis
+
+We will use Survival Analysis based on Kaplan-Meier estimators. Let's create a survival object and churned == 1 represents that the customer is no longer subscribed.
+
+```{r}
+df$SurvObj <- with(df, Surv(time, churned == 1))
+df
+```
+
+Let's create the Kaplan-Meier estimator. The "log" confidence interval is preferred.
+
+```{r}
+km.as.one <- survfit(SurvObj ~ 1, data = df, conf.type = "log", conf.int=0.95)
+km.as.one
+```
+
+Let's review the structure of our new object:
+
+```{r}
+str(km.as.one)
+```
+
+Let's review what he have created. This is the curve:
+
+```{r summary}
+summary(km.as.one)
+```
+
+Let's create a graph:
+
+```{r graph 1}
+ggsurv(km.as.one)
+```
+
+Let's improve the graph:
+
+```{r graph 2}
+ggsurv(km.as.one, xlab = 'Days since subscription', ylab = '% Survival', main='Active Users Evolution')
+```
+
+**Question: what is happening?**
+
+It is worth noticing that we have two groups (based on gender). This is called **Multiple Stratum** and we can generate the analysis for both groups and compare:
+
+```{r multiple stratum}
+km.by.gender <- survfit(SurvObj ~ gender, data = df, conf.type = "log", conf.int=0.95)
+km.by.gender
+```
+
+We need to know the structure of our new object:
+
+```{r}
+str(km.by.gender)
+```
+
+Let's review the survival curve:
+
+```{r summary multiple stratum}
+summary(km.by.gender)
+```
+
+Let's create a graph:
+
+```{r graph 3}
+ggsurv(km.by.gender)
+```
+
+Let's improve the graph:
+
+```{r graph 4, message=FALSE}
+g2 <- ggsurv(km.by.gender, CI=TRUE, xlab = 'Days since subscription', ylab = '% Survival', main='Active Users Evolution per Gender')
+g2 <- g2 +
+      ggplot2::guides(linetype = FALSE) +
+      ggplot2::scale_color_discrete(name='Gender', breaks = c(0,1), labels = c('Male', 'Female'))
+g2
+```
+
+**Question: what is happening?**
+
+One last graph:
+
+```{r graph 5}
+ggsurvplot(km.by.gender, data = df,risk.table = TRUE, size = 1,
+           tables.height = 0.2, risk.table.col="strata",
+           tables.theme = theme_cleantable(), ylim = c(0.7,1), conf.int = TRUE)
+```
+
+# Predicting churn
+
+## Case
+
+ - A telecommunications company and involves customer data for a collection of customers who either stayed with the company or left within a certain period.
+ - In many industries its often not the case that the cut off is so binary. Frequently it might be more likely that a client account lays dormant rather then getting explicitly closed - for example if the client only pays for usage.
+ - We need to predict customer churn.
+ - We will use random forest algorithm.
+
+## Load packages
+
+```{r, message=FALSE}
+# Cleaning the environment
+rm(list=ls())
+
+# List of packages for session
+.packages = c("plyr","dplyr","stringr","ggplot2","reshape2","caret","randomForest","e1071")
+
+# Install CRAN packages (if not already installed)
+.inst <- .packages %in% installed.packages()
+if(length(.packages[!.inst]) > 0) install.packages(.packages[!.inst])
+
+# Load packages into session 
+lapply(.packages, library, character.only=TRUE)
+```
+
+## Prepare the data
+
+We want to train our algorithm. Therefore we are going to split the data into a couple of data sets: train (75%) and test (25%).
+
+```{r}
+churn <- read.csv("data/s10-2.txt", header=T)
+churn$Churned<-churn$Churn.
+churn$Churn. <- NULL
+set.seed(12)
+trainIndex <- caret::createDataPartition(churn$Churned, p = .75, list = FALSE, times = 1)
+churnTrain <- churn[ trainIndex,]
+churnTest <- churn[-trainIndex, ]
+```
+
+Let's have a look on our training data set at the balance: how many clients has an existing contract with our telecommunications company or they have cancelled it.
+
+```{r}
+table(churnTrain$Churned)
+```
+
+So we can see: about ~15% of customers left our service. 
+
+## EDA
+
+We need to avoid missing data (ignore, impute or delete), errors (what can we do) or low or high variance (outliers).
+
+```{r}
+summary(churnTrain)
+```
+
+We can observe:
+
+ - No missing data (not in real life).
+ - From the summary,
+    - The phone is individual, therefore no relevant.
+    - The state is must be treated as a category.
+
+```{r}
+churnTrain$Phone <- NULL
+churnTest$Phone <- NULL
+churnTrain$Area.Code <- as.factor(churnTrain$Area.Code)
+churnTest$Area.Code <- as.factor(churnTest$Area.Code)
+```
+
+The next step is to have a close look at the variables graphically.
+
+```{r}
+one <- ggplot(churn, aes(x=Account.Length, fill=Churned))+geom_density()+ facet_grid(Churned ~ .) + labs(title="Account Length")
+one 
+```
+
+Does not appear to be any noticable difference (in general we need to repeat this operation for all the variables).
+
+## Building the model
+
+First we use a more robust sampling method (repeated cross-validation):
+
+```{r}
+fitControl <- trainControl(method = "cv",
+                           number = 5,
+                           verboseIter = TRUE)
+```
+
+Now we can execute our model:
+
+```{r}
+model <- train(
+  Churned ~ .,
+  tuneLength = 3,
+  data = churnTrain, 
+  method = "ranger",
+  trControl = fitControl
+)
+```
+
+How performs the model agains the training data set:
+
+```{r}
+confusionMatrix(model)
+```
+
+Let's review how it works against the test data set.
+
+```{r}
+pred <- predict(model, newdata=churnTest)
+confusionMatrix(pred, churnTest$Churned)
+```
+
+**Question: What can we observe?**
+
+```{r}
+plot(model)
+```
+
