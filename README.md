@@ -26,10 +26,8 @@ We will use R and Rstudio. In some sessions we will use additional packages for 
 
   - Download R from: https://www.r-project.org (in our case version 3.5.0)
   - Install and follow the instructions
-  - [Mac] Download clang and gfrotran as well from [here](https://cloud.r-project.org/bin/macosx/tools/)
+  - [Mac] Download clang and gfortran as well from [here](https://cloud.r-project.org/bin/macosx/tools/)
 
 **Install Rstudio**
 
   - Download Rstudio from https://www.rstudio.com/products/rstudio/download/#download (in our case version 1.1.453)
-
-
