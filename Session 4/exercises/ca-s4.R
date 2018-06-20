@@ -3,7 +3,7 @@
 # Customer Analytics
 # S4 - CLV
 # @JosepCurto | jcurto@faculty.ie.edu | 2018
-# Version: 1.8
+# Version: 1.9
 #############################################################################
 
 # Clear console
@@ -23,10 +23,10 @@ rm(list=ls())
 if(length(.packages[!.inst]) > 0) install.packages(.packages[!.inst])
 
 # Load packages into session 
-lapply(.packages, require, character.only=TRUE)
+lapply(.packages, library, character.only=TRUE)
 
 # Load data into a dataframe
-df <- read_excel("s4.xlsx", sheet = "Ex2")
+df <- read_excel("data/s4.xlsx", sheet = "Ex2")
 
 # Summary
 summary(df)
@@ -48,7 +48,7 @@ ggplot(df, aes(x = t, y = r)) +
   theme(axis.title = element_text(color="#666666", face="bold", size=10))
 
 # Partial CLV
-df$CLV <- (df$p-df$c)*df$r/(1+df$i)^df$t
+df$CLV <- (df$p-df$c)*df$r/(1+df$i)^(df$t-1)
 
 # Now we have a new column
 df

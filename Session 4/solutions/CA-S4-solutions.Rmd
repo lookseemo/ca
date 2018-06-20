@@ -26,11 +26,13 @@ if(length(.packages[!.inst]) > 0) install.packages(.packages[!.inst])
 lapply(.packages, require, character.only=TRUE)
 ```
 
+# Contractual
+
 ## Loading data
 
 ```{r}
 # Load data into a dataframe
-df <- read_excel("s4.xlsx", sheet = "Ex2")
+df <- read_excel("data/s4.xlsx", sheet = "Ex2")
 df
 ```
 
@@ -75,7 +77,7 @@ ggplot(df, aes(x = t, y = r)) +
 Now we can calculate the (historic) CLV. First we create the new column with CLV per period:
 
 ```{r}
-df$CLV <- (df$p-df$c)*df$r/(1+df$i)^df$t
+df$CLV <- (df$p-df$c)*df$r/(1+df$i)^(df$t-1)
 df
 ```
 
@@ -110,7 +112,7 @@ CLV[7]
 Let's add a new column:
 
 ```{r}
-df$CLV2 <- (df$p-df$c)*0.8/(1+df$i)^df$t
+df$CLV2 <- (df$p-df$c)*0.8/(1+df$i)^(df$t-1)
 df
 ```
 
@@ -128,3 +130,7 @@ CLV <- apply(df, 2, sum)
 CLV[7]
 CLV[8]
 ```
+
+
+# Non-contractual
+

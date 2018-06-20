@@ -1,7 +1,7 @@
 ---
 title: "CA - S4: CLV with R"
 author: Josep Curto
-date: 2018
+date: "`r format(Sys.time(), '%B %d, %Y')`"
 output: 
   html_notebook: 
     fig_caption: yes
@@ -11,6 +11,8 @@ output:
 ---
 
 # Previous steps
+
+Let's assume that we have the aggregated customer data during 8 periods.
 
 ## Load packages
 
@@ -23,14 +25,14 @@ output:
 if(length(.packages[!.inst]) > 0) install.packages(.packages[!.inst])
 
 # Load packages into session 
-lapply(.packages, require, character.only=TRUE)
+lapply(.packages, library, character.only=TRUE)
 ```
 
 ## Loading data
 
 ```{r}
 # Load data into a dataframe
-df <- read_excel("s4.xlsx", sheet = "Ex2")
+df <- read_excel("data/s4.xlsx", sheet = "Ex2")
 df
 ```
 
@@ -40,7 +42,7 @@ The starting point is always EDA (Exploratory Data Analysis).
 
 ## Statistics
 
-We need to understand the main statistics:
+We will use the main statistics:
 
 ```{r}
 summary(df)
@@ -50,7 +52,7 @@ summary(df)
 
 ## Customer evolution
 
-Creating a line chart will help to understand the customers:
+The next step is using visual analytics. Creating a line chart will help to understand the customers:
 
 ```{r}
 ggplot(df, aes(x = t, y = active)) +
@@ -58,9 +60,9 @@ ggplot(df, aes(x = t, y = active)) +
   xlab("Period") + labs(title = "Active Customer Evolution")
 ```
 
-## Retentio ratio evolution
+## Retention ratio evolution
 
-It can help as well to undestand the retention.
+Let's make a line chart for the retention ratio.
 
 ```{r}
 ggplot(df, aes(x = t, y = r)) +
@@ -68,12 +70,12 @@ ggplot(df, aes(x = t, y = r)) +
   xlab("Period") + labs(title = "Retention Ratio Evolution")
 ```
 
-# CLV
+# Historic CLV
 
-Now we can calculate the (historic) CLV. First we create the new column with CLV per period:
+Now we can calculate the historic CLV. First we create the new column with the CLV per period:
 
 ```{r}
-df$CLV <- (df$p-df$c)*df$r/(1+df$i)^df$t
+df$CLV <- (df$p-df$c)*df$r/(1+df$i)^(df$t-1)
 df
 ```
 
@@ -88,11 +90,9 @@ ylab("CLV") + xlab("Period") + labs(title = "CLV Evolution")
 
 **Question: What do we observe?**
 
-# Final steps
-
-Finally we can calculate the CLV value:
-
 ## CLV
+
+Finally we can calculate the CLV value for the whole lifecycle:
 
 ```{r}
 CLV <- apply(df, 2, sum)
@@ -102,3 +102,7 @@ CLV[7]
 # Exercise
 
 **Question: What happens if retention ratio has a constant value of 0.80?**
+
+# References
+
+ - An extended discussion about the CLV. [Calculating CLV, Stephen Oates](https://srepho.github.io/CLV/CLV)
