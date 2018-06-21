@@ -7,3 +7,7 @@ The topic of this session is **R**. We will introduce R and RStudio. This reposi
   - article
   - exercises and scripts
   - keynote
+
+## References
+
+  - [ggplot2 cheatsheet](https://github.com/rstudio/cheatsheets/raw/master/data-visualization-2.1.pdf)
