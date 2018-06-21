@@ -15,3 +15,6 @@ The topic of this session is **R**. We will introduce R and RStudio. This reposi
     - [RMarkdown reference](https://www.rstudio.com/wp-content/uploads/2015/03/rmarkdown-reference.pdf)
     - [R base](github.com/rstudio/cheatsheets/raw/master/base-r.pdf)
     - [R advance](https://www.rstudio.com/wp-content/uploads/2016/02/advancedR.pdf)
+  - How to keep you updated about R:
+    - [R-bloggers](https://www.r-bloggers.com)
+    - [CRANberries](http://dirk.eddelbuettel.com/cranberries/)
