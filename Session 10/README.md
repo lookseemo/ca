@@ -13,3 +13,7 @@ The topic of this session is **Churn Analysis**. This repository includes the co
   - Types of churn
   - How to understand the evolution of churn
   - Predicting churn
+  
+## References
+
+ - [suvminer cheatsheet](https://github.com/rstudio/cheatsheets/raw/master/survminer.pdf)
